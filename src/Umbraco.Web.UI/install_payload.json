@@ -1,0 +1,14 @@
+{
+  "user": {
+    "name": "Admin",
+    "email": "admin@admin.com",
+    "password": "Password123!",
+    "subscribeToNewsletter": false
+  },
+  "database": {
+    "databaseProviderMetadataId": "PostgreSQL",
+    "useCustomConnectionString": true,
+    "connectionString": "Host=localhost;Port=5432;Database=umbracodbi;Username=umbraco;Password=omni_password;Include Error Detail=true"
+  },
+  "telemetryLevel": "Basic"
+}

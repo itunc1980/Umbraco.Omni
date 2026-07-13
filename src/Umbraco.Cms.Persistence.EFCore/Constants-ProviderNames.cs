@@ -19,5 +19,10 @@ public static partial class Constants
         /// The provider name for SQL Server databases.
         /// </summary>
         public const string SQLServer = "Microsoft.Data.SqlClient";
+
+        /// <summary>
+        /// The provider name for PostgreSQL databases.
+        /// </summary>
+        public const string PostgreSQL = "Npgsql.EntityFrameworkCore.PostgreSQL";
     }
 }

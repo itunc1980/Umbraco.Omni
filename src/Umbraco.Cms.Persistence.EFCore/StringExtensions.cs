@@ -1,4 +1,4 @@
-﻿using Umbraco.Cms.Core;
+using Umbraco.Cms.Core;
 
 namespace Umbraco.Cms.Persistence.EFCore;
 
@@ -15,16 +15,26 @@ internal static class StringExtensions
     /// <returns><c>true</c> if the provider names match; otherwise, <c>false</c>.</returns>
     internal static bool CompareProviderNames(this string connectionProvider, string? compareString)
     {
-        if (compareString is null)
+        if (connectionProvider is null || compareString is null)
         {
             return false;
         }
 
-        if (connectionProvider == compareString)
+        if (string.Equals(connectionProvider, compareString, System.StringComparison.InvariantCultureIgnoreCase))
         {
             return true;
         }
 
-        return connectionProvider is "Microsoft.Data.SQLite" or Constants.ProviderNames.SQLLite && compareString is "Microsoft.Data.SQLite" or Constants.ProviderNames.SQLLite;
+        if (connectionProvider is "Microsoft.Data.SqlClient" or Constants.ProviderNames.SQLServer && compareString is "Microsoft.Data.SqlClient" or Constants.ProviderNames.SQLServer)
+        {
+            return true;
+        }
+
+        if (connectionProvider is "Microsoft.Data.SQLite" or Constants.ProviderNames.SQLLite && compareString is "Microsoft.Data.SQLite" or Constants.ProviderNames.SQLLite)
+        {
+            return true;
+        }
+
+        return connectionProvider is "PostgreSQL" or "Npgsql" or Constants.ProviderNames.PostgreSQL && compareString is "PostgreSQL" or "Npgsql" or Constants.ProviderNames.PostgreSQL;
     }
 }

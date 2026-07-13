@@ -111,12 +111,54 @@ public class UmbracoDatabaseFactory : DisposableObjectSlim, IUmbracoDatabaseFact
         {
             if (_dbProviderFactory == null)
             {
-                _dbProviderFactory = string.IsNullOrWhiteSpace(ProviderName)
-                    ? null
-                    : _dbProviderFactoryCreator.CreateFactory(ProviderName);
+                if (string.IsNullOrWhiteSpace(ProviderName))
+                {
+                    return null;
+                }
+
+                try
+                {
+                    _dbProviderFactory = _dbProviderFactoryCreator.CreateFactory(ProviderName);
+                }
+                catch
+                {
+                    // Provider not registered in DbProviderFactories — try reflection for known providers
+                    _dbProviderFactory = ResolveProviderFactoryByReflection(ProviderName);
+                }
             }
 
             return _dbProviderFactory;
+        }
+    }
+
+    private static DbProviderFactory? ResolveProviderFactoryByReflection(string providerName)
+    {
+        string normalized = providerName.Trim().ToLowerInvariant();
+
+        (string assemblyName, string typeName)? target = normalized switch
+        {
+            "postgresql" or "npgsql" => ("Npgsql", "Npgsql.NpgsqlFactory"),
+            "mysql" or "pomelo" => ("MySqlConnector", "MySqlConnector.MySqlConnectorFactory"),
+            "oracle" => ("Oracle.ManagedDataAccess", "Oracle.ManagedDataAccess.Client.OracleClientFactory"),
+            _ => null,
+        };
+
+        if (target == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var assembly = System.Reflection.Assembly.Load(target.Value.assemblyName);
+            var type = assembly.GetType(target.Value.typeName);
+            var instanceField = type?.GetField("Instance",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            return instanceField?.GetValue(null) as DbProviderFactory;
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -235,15 +277,63 @@ public class UmbracoDatabaseFactory : DisposableObjectSlim, IUmbracoDatabaseFact
             throw new Exception($"Can't find an NPoco database type for provider name \"{ProviderName}\".");
         }
 
-        _sqlSyntax = _dbProviderFactoryCreator.GetSqlSyntaxProvider(ProviderName!);
+        // Try to get the syntax provider for the configured provider name.
+        // If the provider name is not recognized (e.g. PostgreSQL, MySQL, Oracle),
+        // fall back to using the first available syntax provider. This allows the
+        // legacy NPoco layer to initialize without crashing, while EF Core handles
+        // the actual database operations for non-SqlServer/Sqlite providers.
+        bool isUnknownProvider = false;
+        try
+        {
+            _sqlSyntax = _dbProviderFactoryCreator.GetSqlSyntaxProvider(ProviderName!);
+        }
+        catch (InvalidOperationException)
+        {
+            _logger.LogWarning(
+                "No legacy NPoco syntax provider found for \"{ProviderName}\". " +
+                "Using fallback syntax provider. EF Core will handle database operations.",
+                ProviderName);
+            isUnknownProvider = true;
+
+            // Use SQLite syntax provider as a safe fallback since it generates
+            // the least SQL Server-specific syntax
+            try
+            {
+                _sqlSyntax = _dbProviderFactoryCreator.GetSqlSyntaxProvider("Microsoft.Data.Sqlite");
+            }
+            catch
+            {
+                // If SQLite is also not available, try SQL Server
+                _sqlSyntax = _dbProviderFactoryCreator.GetSqlSyntaxProvider("Microsoft.Data.SqlClient");
+            }
+        }
+
         if (_sqlSyntax == null)
         {
             throw new Exception($"Can't find a sql syntax provider for provider name \"{ProviderName}\".");
         }
 
-        _bulkSqlInsertProvider = _dbProviderFactoryCreator.CreateBulkSqlInsertProvider(ProviderName!);
+        _bulkSqlInsertProvider = null;
+        try
+        {
+            _bulkSqlInsertProvider = _dbProviderFactoryCreator.CreateBulkSqlInsertProvider(ProviderName!);
+        }
+        catch (InvalidOperationException)
+        {
+            // Not available for this provider, that's OK for non-legacy providers
+            if (!isUnknownProvider)
+            {
+                throw;
+            }
+        }
 
-        _databaseType = _sqlSyntax.GetUpdatedDatabaseType(_databaseType, ConnectionString);
+        // Skip GetUpdatedDatabaseType for unknown providers to avoid
+        // connection string incompatibility errors (e.g. SQL Server trying
+        // to parse a PostgreSQL connection string with 'host=' keyword)
+        if (!isUnknownProvider)
+        {
+            _databaseType = _sqlSyntax.GetUpdatedDatabaseType(_databaseType, ConnectionString);
+        }
 
         // ensure we have only 1 set of mappers, and 1 PocoDataFactory, for all database
         // so that everything NPoco is properly cached for the lifetime of the application

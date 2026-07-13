@@ -42,6 +42,18 @@ public class ConfigureConnectionStrings : IConfigureNamedOptions<ConnectionStrin
         }
 
         options.ConnectionString = _configuration.GetUmbracoConnectionString(name, out string? providerName);
+
+        if (providerName == null && !string.IsNullOrWhiteSpace(options.ConnectionString))
+        {
+            // Auto-detect provider from connection string patterns
+            string connLower = options.ConnectionString.ToLowerInvariant();
+            if (connLower.Contains("host=") && connLower.Contains("port=") &&
+                (connLower.Contains("username=") || connLower.Contains("password=") || connLower.Contains("user id=")))
+            {
+                providerName = "PostgreSQL";
+            }
+        }
+
         options.ProviderName = providerName ??
                                ConnectionStrings.DefaultProviderName;
     }

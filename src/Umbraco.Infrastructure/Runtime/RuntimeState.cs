@@ -285,6 +285,12 @@ public class RuntimeState : IRuntimeState
             // no scope, no service - just directly accessing the database
             using (IUmbracoDatabase database = databaseFactory.CreateDatabase())
             {
+                // Check if this is a known legacy provider (SqlServer or Sqlite)
+                // If it's a new provider (PostgreSQL, MySQL, Oracle), bypass the NPoco schema check
+                // to prevent SQL syntax errors, and assume EF Core will handle the schema.
+                bool isLegacyProvider = databaseFactory.ProviderName == "Microsoft.Data.SqlClient" || 
+                                        databaseFactory.ProviderName == "Microsoft.Data.Sqlite";
+
                 if (!database.IsUmbracoInstalled())
                 {
                     return UmbracoDatabaseState.NotInstalled;
@@ -292,7 +298,10 @@ public class RuntimeState : IRuntimeState
 
                 // Make ONE SQL call to determine Umbraco upgrade vs package migrations state.
                 // All will be prefixed with the same key.
-                IReadOnlyDictionary<string, string?>? keyValues = database.GetFromKeyValueTable(Constants.Conventions.Migrations.KeyValuePrefix);
+                // NOTE: We only do this for legacy providers as EF Core providers handle their own state.
+                IReadOnlyDictionary<string, string?>? keyValues = isLegacyProvider 
+                    ? database.GetFromKeyValueTable(Constants.Conventions.Migrations.KeyValuePrefix)
+                    : new Dictionary<string, string?>();
 
                 // This could need both an upgrade AND package migrations to execute, so always add any pending package migrations
                 IReadOnlyList<string> packagesRequiringMigration = _packageMigrationState.GetPendingPackageMigrations(keyValues);

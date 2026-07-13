@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Cms.Infrastructure.Persistence.Dtos;
 using Umbraco.Cms.Persistence.EFCore.Migrations;
 
 namespace Umbraco.Cms.Persistence.EFCore;
@@ -84,9 +85,280 @@ public class UmbracoDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        foreach (IMutableEntityType entity in modelBuilder.Model.GetEntityTypes())
+        // Register User & User Group DTOs to the EF Core model
+        modelBuilder.Entity<UserDto>(entity =>
         {
-            entity.SetTableName(Core.Constants.DatabaseSchema.TableNamePrefix + entity.GetTableName());
+            entity.ToTable("umbracoUser");
+            entity.HasKey(e => e.Id);
+            entity.HasMany(u => u.UserGroupDtos)
+                  .WithMany()
+                  .UsingEntity<System.Collections.Generic.Dictionary<string, object>>(
+                      "umbracoUser2UserGroup",
+                      r => r.HasOne<UserGroupDto>().WithMany().HasForeignKey("userGroupId"),
+                      l => l.HasOne<UserDto>().WithMany().HasForeignKey("userId"));
+        });
+
+        modelBuilder.Entity<UserGroupDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup");
+            entity.HasKey(e => e.Id);
+            entity.HasAlternateKey(e => e.Key);
+        });
+
+        modelBuilder.Entity<UserStartNodeDto>(entity =>
+        {
+            entity.ToTable("umbracoUserStartNode");
+            entity.HasKey(e => e.Id);
+            entity.HasOne<UserDto>()
+                  .WithMany(u => u.UserStartNodeDtos)
+                  .HasForeignKey(e => e.UserId);
+        });
+
+        modelBuilder.Entity<UserGroup2AppDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2App");
+            entity.HasKey(e => new { e.UserGroupId, e.AppAlias });
+            entity.HasOne<UserGroupDto>()
+                  .WithMany(g => g.UserGroup2AppDtos)
+                  .HasForeignKey(e => e.UserGroupId);
+        });
+
+        modelBuilder.Entity<UserGroup2LanguageDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2Language");
+            entity.HasKey(e => new { e.UserGroupId, e.LanguageId });
+            entity.HasOne<UserGroupDto>()
+                  .WithMany(g => g.UserGroup2LanguageDtos)
+                  .HasForeignKey(e => e.UserGroupId);
+        });
+
+        modelBuilder.Entity<UserGroup2PermissionDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2Permission");
+            entity.HasKey(e => e.Id);
+            entity.HasOne<UserGroupDto>()
+                  .WithMany(g => g.UserGroup2PermissionDtos)
+                  .HasForeignKey(e => e.UserGroupKey)
+                  .HasPrincipalKey(g => g.Key);
+        });
+
+        modelBuilder.Entity<UserGroup2GranularPermissionDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2GranularPermission");
+            entity.HasKey(e => e.Id);
+            entity.HasOne<UserGroupDto>()
+                  .WithMany(g => g.UserGroup2GranularPermissionDtos)
+                  .HasForeignKey(e => e.UserGroupKey)
+                  .HasPrincipalKey(g => g.Key);
+        });
+
+        var providerName = Database.ProviderName;
+        bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
+        bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
+        bool isMySql = string.Equals(providerName, "Pomelo.EntityFrameworkCore.MySql", StringComparison.OrdinalIgnoreCase);
+
+        foreach (IMutableEntityType entity in modelBuilder.Model.GetEntityTypes().ToList())
+        {
+            if (entity.ClrType != null)
+            {
+                // First ignore ignored properties
+                var toIgnore = new System.Collections.Generic.List<string>();
+                foreach (var prop in entity.GetProperties())
+                {
+                    System.Reflection.PropertyInfo? clrProp = entity.ClrType.GetProperty(prop.Name);
+                    if (clrProp != null && clrProp.GetCustomAttributes(true).Any(a => 
+                        a.GetType().Name == "IgnoreAttribute" || 
+                        a.GetType().Name == "ResultColumnAttribute" ||
+                        a.GetType().Name == "Ignore" ||
+                        a.GetType().Name == "ResultColumn"))
+                    {
+                        toIgnore.Add(prop.Name);
+                    }
+                }
+                foreach (var propName in toIgnore)
+                {
+                    modelBuilder.Entity(entity.ClrType).Ignore(propName);
+                }
+
+                // Map NPoco Table Name Attribute
+                object? npocoTableNameAttr = entity.ClrType.GetCustomAttributes(true)
+                    .FirstOrDefault(a => a.GetType().FullName == "NPoco.TableNameAttribute");
+                if (npocoTableNameAttr != null)
+                {
+                    System.Reflection.PropertyInfo? valueProp = npocoTableNameAttr.GetType().GetProperty("Value");
+                    string? npocoTableName = valueProp?.GetValue(npocoTableNameAttr) as string;
+                    if (!string.IsNullOrWhiteSpace(npocoTableName))
+                    {
+                        entity.SetTableName(npocoTableName);
+                    }
+                }
+
+                // Map remaining properties' column names
+                foreach (IMutableProperty property in entity.GetProperties())
+                {
+                    System.Reflection.PropertyInfo? clrProperty = entity.ClrType.GetProperty(property.Name);
+                    if (clrProperty != null)
+                    {
+                        object? npocoColumnAttr = clrProperty.GetCustomAttributes(true)
+                            .FirstOrDefault(a => a.GetType().FullName == "NPoco.ColumnAttribute");
+                        if (npocoColumnAttr != null)
+                        {
+                            System.Reflection.PropertyInfo? nameProp = npocoColumnAttr.GetType().GetProperty("Name");
+                            string? npocoColumnName = nameProp?.GetValue(npocoColumnAttr) as string;
+                            if (!string.IsNullOrWhiteSpace(npocoColumnName))
+                            {
+                                property.SetColumnName(npocoColumnName);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 1. Prefix Table Name (Only if it doesn't already start with the prefix)
+            var currentTableName = entity.GetTableName();
+            if (currentTableName != null)
+            {
+                var prefixedTableName = currentTableName.StartsWith(Core.Constants.DatabaseSchema.TableNamePrefix, StringComparison.OrdinalIgnoreCase)
+                    ? currentTableName
+                    : Core.Constants.DatabaseSchema.TableNamePrefix + currentTableName;
+
+                if (isPostgreSql)
+                {
+                    entity.SetTableName(ToSnakeCase(prefixedTableName));
+                }
+                else
+                {
+                    entity.SetTableName(prefixedTableName);
+                }
+            }
+
+            // PostgreSQL Specific Mapping: snake_case columns, keys, indexes
+            if (isPostgreSql)
+            {
+                var tableName = entity.GetTableName();
+                if (tableName != null)
+                {
+                    var storeObject = StoreObjectIdentifier.Table(tableName, entity.GetSchema());
+                    foreach (IMutableProperty property in entity.GetProperties())
+                    {
+                        var columnName = property.GetColumnName(storeObject);
+                        if (columnName != null)
+                        {
+                            property.SetColumnName(ToSnakeCase(columnName));
+                        }
+                    }
+                }
+
+                foreach (IMutableKey key in entity.GetKeys())
+                {
+                    var keyName = key.GetName();
+                    if (keyName != null)
+                    {
+                        key.SetName(ToSnakeCase(keyName));
+                    }
+                }
+
+                foreach (IMutableForeignKey foreignKey in entity.GetForeignKeys())
+                {
+                    var constraintName = foreignKey.GetConstraintName();
+                    if (constraintName != null)
+                    {
+                        foreignKey.SetConstraintName(ToSnakeCase(constraintName));
+                    }
+                }
+
+                foreach (IMutableIndex index in entity.GetIndexes())
+                {
+                    var indexName = index.GetDatabaseName();
+                    if (indexName != null)
+                    {
+                        index.SetDatabaseName(ToSnakeCase(indexName));
+                    }
+                }
+            }
+
+            // Oracle Specific Mapping: 30 character limit for identifiers
+            if (isOracle)
+            {
+                foreach (IMutableKey key in entity.GetKeys())
+                {
+                    var keyName = key.GetName();
+                    if (keyName?.Length > 30)
+                    {
+                        key.SetName(TruncateIdentifier(keyName, 30));
+                    }
+                }
+
+                foreach (IMutableForeignKey foreignKey in entity.GetForeignKeys())
+                {
+                    var constraintName = foreignKey.GetConstraintName();
+                    if (constraintName?.Length > 30)
+                    {
+                        foreignKey.SetConstraintName(TruncateIdentifier(constraintName, 30));
+                    }
+                }
+
+                foreach (IMutableIndex index in entity.GetIndexes())
+                {
+                    var indexName = index.GetDatabaseName();
+                    if (indexName?.Length > 30)
+                    {
+                        index.SetDatabaseName(TruncateIdentifier(indexName, 30));
+                    }
+                }
+            }
+
+            // MySQL / Pomelo Specific Mapping: 64 character limit for keys and indexes
+            if (isMySql)
+            {
+                foreach (IMutableForeignKey foreignKey in entity.GetForeignKeys())
+                {
+                    var constraintName = foreignKey.GetConstraintName();
+                    if (constraintName?.Length > 64)
+                    {
+                        foreignKey.SetConstraintName(TruncateIdentifier(constraintName, 64));
+                    }
+                }
+
+                foreach (IMutableIndex index in entity.GetIndexes())
+                {
+                    var indexName = index.GetDatabaseName();
+                    if (indexName?.Length > 64)
+                    {
+                        index.SetDatabaseName(TruncateIdentifier(indexName, 64));
+                    }
+                }
+            }
         }
+    }
+
+    private static string ToSnakeCase(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
+
+        var startUnderscore = input.StartsWith("_");
+        var str = System.Text.RegularExpressions.Regex.Replace(input, @"([a-z0-9])([A-Z])", "$1_$2").ToLowerInvariant();
+        return startUnderscore ? "_" + str : str;
+    }
+
+    private static string TruncateIdentifier(string identifier, int maxLength)
+    {
+        if (string.IsNullOrEmpty(identifier) || identifier.Length <= maxLength)
+        {
+            return identifier;
+        }
+
+        // Generate a deterministic 8-character hex hash from the identifier to preserve uniqueness
+        string hash = Math.Abs(identifier.GetHashCode()).ToString("X8");
+        int takeLength = maxLength - hash.Length - 1; // leave room for underscore and hash
+        if (takeLength < 0)
+        {
+            takeLength = 0;
+        }
+
+        return $"{identifier.Substring(0, takeLength)}_{hash}";
     }
 }

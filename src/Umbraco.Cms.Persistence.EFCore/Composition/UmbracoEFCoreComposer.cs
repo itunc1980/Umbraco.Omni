@@ -23,13 +23,8 @@ public class UmbracoEFCoreComposer : IComposer
         builder.AddNotificationAsyncHandler<DatabaseSchemaAndDataCreatedNotification, EFCoreCreateTablesNotificationHandler>();
         builder.AddNotificationAsyncHandler<UnattendedInstallNotification, EFCoreCreateTablesNotificationHandler>();
 
-        builder.Services.AddUmbracoDbContext<UmbracoDbContext>(
-            (provider, options, connectionString, providerName) =>
-            {
-                // Register the entity sets needed by OpenIddict.
-                options.UseOpenIddict();
-            },
-            shareUmbracoConnection: true);
+        // Register dynamic flexible data stores based on appsettings configuration
+        builder.Services.AddUmbracoFlexibleDataStores(builder.Config);
 
         builder.Services.AddOpenIddict()
 

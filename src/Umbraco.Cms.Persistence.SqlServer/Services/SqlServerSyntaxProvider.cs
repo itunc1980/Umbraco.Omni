@@ -78,6 +78,18 @@ public class SqlServerSyntaxProvider : MicrosoftSqlSyntaxProviderBase<SqlServerS
 
     public override DatabaseType GetUpdatedDatabaseType(DatabaseType current, string? connectionString)
     {
+        string? connStrLower = connectionString?.ToLowerInvariant();
+        bool isNotSqlServer = connStrLower != null && (
+            (connStrLower.Contains("host=") && connStrLower.Contains("port=")) ||
+            (connStrLower.Contains("data source=") && (connStrLower.Contains(".db") || connStrLower.Contains(".sqlite"))) ||
+            (connStrLower.Contains("port=") && connStrLower.Contains("server=") && connStrLower.Contains("uid="))
+        );
+
+        if (isNotSqlServer)
+        {
+            return new UmbracoSqlServerDatabaseType();
+        }
+
         var setting = _globalSettings.Value.DatabaseFactoryServerVersion;
         var fromSettings = false;
 
