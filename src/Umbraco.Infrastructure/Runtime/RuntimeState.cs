@@ -298,8 +298,7 @@ public class RuntimeState : IRuntimeState
 
                 // Make ONE SQL call to determine Umbraco upgrade vs package migrations state.
                 // All will be prefixed with the same key.
-                // NOTE: We only do this for legacy providers as EF Core providers handle their own state.
-                IReadOnlyDictionary<string, string?>? keyValues = isLegacyProvider 
+                IReadOnlyDictionary<string, string?>? keyValues = database.HasTable("umbracoKeyValue")
                     ? database.GetFromKeyValueTable(Constants.Conventions.Migrations.KeyValuePrefix)
                     : new Dictionary<string, string?>();
 

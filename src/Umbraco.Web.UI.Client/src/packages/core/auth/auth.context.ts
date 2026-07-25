@@ -740,7 +740,7 @@ export class UmbAuthContext extends UmbContextBase {
 	 * @returns The post logout redirect url, which is the backoffice path with the logout path appended.
 	 */
 	getPostLogoutRedirectUrl() {
-		return `${window.location.origin}${this.#backofficePath}${this.#backofficePath.endsWith('/') ? '' : '/'}logout`;
+		return `${window.location.origin}${this.#backofficePath}`;
 	}
 
 	/**

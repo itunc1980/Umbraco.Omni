@@ -42,6 +42,9 @@ public static class UmbracoFlexibleDataStoresExtensions
         services.AddUmbracoDbContext<UmbracoDbContext>(
             (options, connString, resolvedProvider, sp) =>
             {
+                // Suppress pending model changes warnings for dynamic multi-provider compatibility
+                options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+
                 // Register the entity sets needed by OpenIddict
                 options.UseOpenIddict();
 

@@ -113,12 +113,15 @@ internal class LongRunningOperationRepository : RepositoryBase, ILongRunningOper
     /// <inheritdoc/>
     public async Task UpdateStatusAsync(Guid id, LongRunningOperationStatus status, DateTimeOffset expirationTime)
     {
-        Sql<ISqlContext> sql = Sql()
-            .Update<LongRunningOperationDto>(x => x
-                .Set(y => y.Status, status.ToString())
-                .Set(y => y.UpdateDate, DateTime.UtcNow)
-                .Set(y => y.ExpirationDate, expirationTime.DateTime))
-            .Where<LongRunningOperationDto>(x => x.Id == id);
+        var tableName = QuoteTableName("umbracoLongRunningOperation");
+        var statusCol = QuoteColumnName("status");
+        var updateCol = QuoteColumnName("updateDate");
+        var expCol = QuoteColumnName("expirationDate");
+        var idCol = QuoteColumnName("id");
+
+        Sql<ISqlContext> sql = SqlContext.Sql()
+            .Append($"UPDATE {tableName} SET {statusCol} = @0, {updateCol} = @1, {expCol} = @2 WHERE {idCol} = @3",
+                status.ToString(), DateTime.UtcNow, expirationTime.DateTime, id);
 
         await Database.ExecuteAsync(sql);
     }
@@ -126,11 +129,14 @@ internal class LongRunningOperationRepository : RepositoryBase, ILongRunningOper
     /// <inheritdoc/>
     public async Task SetResultAsync<T>(Guid id, T result)
     {
-        Sql<ISqlContext> sql = Sql()
-            .Update<LongRunningOperationDto>(x => x
-                .Set(y => y.Result, _jsonSerializer.Serialize(result))
-                .Set(y => y.UpdateDate, DateTime.UtcNow))
-            .Where<LongRunningOperationDto>(x => x.Id == id);
+        var tableName = QuoteTableName("umbracoLongRunningOperation");
+        var resultCol = QuoteColumnName("result");
+        var updateCol = QuoteColumnName("updateDate");
+        var idCol = QuoteColumnName("id");
+
+        Sql<ISqlContext> sql = SqlContext.Sql()
+            .Append($"UPDATE {tableName} SET {resultCol} = @0, {updateCol} = @1 WHERE {idCol} = @2",
+                _jsonSerializer.Serialize(result), DateTime.UtcNow, id);
 
         await Database.ExecuteAsync(sql);
     }

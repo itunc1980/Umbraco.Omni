@@ -288,6 +288,8 @@ public class BackOfficeApplicationManager : OpenIdDictApplicationManagerBase, IB
             descriptor.RedirectUris.Add(CallbackUrlFor(backOfficeHost, _authorizeCallbackPathName));
             descriptor.PostLogoutRedirectUris.Add(CallbackUrlFor(backOfficeHost, _authorizeCallbackPathName));
             descriptor.PostLogoutRedirectUris.Add(CallbackUrlFor(backOfficeHost, _authorizeCallbackLogoutPathName));
+            descriptor.PostLogoutRedirectUris.Add(CallbackUrlFor(backOfficeHost, "/umbraco"));
+            descriptor.PostLogoutRedirectUris.Add(CallbackUrlFor(backOfficeHost, "/umbraco/"));
         }
 
         return descriptor;

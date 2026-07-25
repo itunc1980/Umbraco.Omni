@@ -152,6 +152,18 @@ public class UmbracoDbContext : DbContext
                   .HasPrincipalKey(g => g.Key);
         });
 
+        modelBuilder.Entity<UserLoginDto>(entity =>
+        {
+            entity.ToTable("umbracoUserLogin");
+            entity.HasKey(e => e.SessionId);
+        });
+
+        modelBuilder.Entity<User2ClientIdDto>(entity =>
+        {
+            entity.ToTable("umbracoUser2ClientId");
+            entity.HasKey(e => new { e.UserId, e.ClientId });
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);

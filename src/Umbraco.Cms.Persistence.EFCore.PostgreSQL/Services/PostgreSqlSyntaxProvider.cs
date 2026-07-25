@@ -297,25 +297,28 @@ public class PostgreSqlSyntaxProvider : SqlSyntaxProviderBase<PostgreSqlSyntaxPr
         Type type = typeof(TDto);
         var tableName = GetQuotedTableName(type.GetTableName());
         var join = tableName;
-        string? quotedAlias = null;
 
         if (alias != null)
         {
-            quotedAlias = GetQuotedTableName(alias);
+            var quotedAlias = GetQuotedTableName(alias);
             join += " " + quotedAlias;
         }
 
         var nestedSql = new Sql<ISqlContext>(sql.SqlContext);
         nestedSql = nestedJoin(nestedSql);
 
-        Sql<ISqlContext>.SqlJoinClause<ISqlContext> sqlJoin = sql.LeftJoin("(" + join);
+        Sql<ISqlContext>.SqlJoinClause<ISqlContext> sqlJoin = sql.LeftJoin(join);
         sql.Append(nestedSql);
-        sql.Append($") {quotedAlias ?? tableName}");
         return sqlJoin;
     }
 
     public override IEnumerable<string> GetTablesInSchema(IDatabase db)
     {
         return db.Fetch<string>("SELECT tablename FROM pg_tables WHERE schemaname = 'public'");
+    }
+
+    public override string OrderByGuid(string tableName, string columnName)
+    {
+        return $"{GetQuotedTableName(tableName)}.{GetQuotedColumnName(columnName)}";
     }
 }

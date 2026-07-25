@@ -48,11 +48,14 @@ internal sealed class ServerRegistrationRepository : EntityRepositoryBase<int, I
     {
         DateTime timeoutDate = DateTime.UtcNow.Subtract(staleTimeout);
 
-        Sql<ISqlContext> sql = Sql()
-            .Update<ServerRegistrationDto>(c => c
-                .Set(x => x.IsActive, false)
-                .Set(x => x.IsSchedulingPublisher, false))
-            .Where<ServerRegistrationDto>(x => x.DateAccessed < timeoutDate);
+        var tableName = SqlContext.SqlSyntax.GetQuotedTableName("umbracoServer");
+        var activeCol = SqlContext.SqlSyntax.GetQuotedColumnName("isActive");
+        var schedulingCol = SqlContext.SqlSyntax.GetQuotedColumnName("isSchedulingPublisher");
+        var accessedCol = SqlContext.SqlSyntax.GetQuotedColumnName("dateAccessed");
+
+        Sql<ISqlContext> sql = SqlContext.Sql()
+            .Append($"UPDATE {tableName} SET {activeCol} = @0, {schedulingCol} = @1 WHERE {accessedCol} < @2",
+                false, false, timeoutDate);
         Database.Execute(sql);
 
         ClearCache();
