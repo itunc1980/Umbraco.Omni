@@ -31,6 +31,14 @@ public class UmbracoEFCoreComposer : IComposer
         // Register EF Core UserRepository (PoC)
         builder.Services.AddUnique<IUserRepository, EfUserRepository>(ServiceLifetime.Singleton);
 
+        // ── Batch 1: Audit, AuditEntry, Domain, Language, KeyValue ──────────
+        builder.Services.AddUnique<IAuditRepository, EfAuditRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IAuditEntryRepository, EfAuditEntryRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IDomainRepository, EfDomainRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ILanguageRepository, EfLanguageRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IKeyValueRepository, EfKeyValueRepository>(ServiceLifetime.Singleton);
+
+
         builder.Services.AddOpenIddict()
 
             // Register the OpenIddict core components.

@@ -164,6 +164,53 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => new { e.UserId, e.ClientId });
         });
 
+        // ── Batch 1: Audit, AuditEntry, Domain, Language, KeyValue ──────────
+
+        modelBuilder.Entity<LogDto>(entity =>
+        {
+            entity.ToTable("umbracoLog");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<AuditEntryDto>(entity =>
+        {
+            entity.ToTable("umbracoAudit");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<LanguageDto>(entity =>
+        {
+            entity.ToTable("umbracoLanguage");
+            entity.HasKey(e => e.Id);
+            entity.HasOne<LanguageDto>()
+                  .WithMany()
+                  .HasForeignKey(e => e.FallbackLanguageId)
+                  .IsRequired(false);
+        });
+
+        modelBuilder.Entity<DomainDto>(entity =>
+        {
+            entity.ToTable("umbracoDomain");
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.IsoCode); // ResultColumn — not a DB column
+            entity.HasOne<LanguageDto>()
+                  .WithMany()
+                  .HasForeignKey(e => e.DefaultLanguage)
+                  .IsRequired(false);
+        });
+
+        modelBuilder.Entity<KeyValueDto>(entity =>
+        {
+            entity.ToTable("umbracoKeyValue");
+            entity.HasKey(e => e.Key);
+        });
+
+        modelBuilder.Entity<NodeDto>(entity =>
+        {
+            entity.ToTable("umbracoNode");
+            entity.HasKey(e => e.NodeId);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
