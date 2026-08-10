@@ -51,7 +51,7 @@ internal sealed class ServerRegistrationRepository : EntityRepositoryBase<int, I
         var tableName = SqlContext.SqlSyntax.GetQuotedTableName("umbracoServer");
         var activeCol = SqlContext.SqlSyntax.GetQuotedColumnName("isActive");
         var schedulingCol = SqlContext.SqlSyntax.GetQuotedColumnName("isSchedulingPublisher");
-        var accessedCol = SqlContext.SqlSyntax.GetQuotedColumnName("dateAccessed");
+        var accessedCol = SqlContext.SqlSyntax.GetQuotedColumnName("lastNotifiedDate");
 
         Sql<ISqlContext> sql = SqlContext.Sql()
             .Append($"UPDATE {tableName} SET {activeCol} = @0, {schedulingCol} = @1 WHERE {accessedCol} < @2",

@@ -4,8 +4,10 @@ using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.Persistence.Repositories;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
+using Umbraco.Cms.Persistence.EFCore.Repositories;
 using Umbraco.Extensions;
 
 namespace Umbraco.Cms.Persistence.EFCore.Composition;
@@ -25,6 +27,9 @@ public class UmbracoEFCoreComposer : IComposer
 
         // Register dynamic flexible data stores based on appsettings configuration
         builder.Services.AddUmbracoFlexibleDataStores(builder.Config);
+
+        // Register EF Core UserRepository (PoC)
+        builder.Services.AddUnique<IUserRepository, EfUserRepository>(ServiceLifetime.Singleton);
 
         builder.Services.AddOpenIddict()
 
