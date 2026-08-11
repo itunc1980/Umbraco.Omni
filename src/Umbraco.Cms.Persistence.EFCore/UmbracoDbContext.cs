@@ -211,6 +211,72 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.NodeId);
         });
 
+        // ── Batch 2: RedirectUrl, Notifications, Consent, LogViewerQuery, Webhook ──
+
+        modelBuilder.Entity<RedirectUrlDto>(entity =>
+        {
+            entity.ToTable("umbracoRedirectUrl");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<User2NodeNotifyDto>(entity =>
+        {
+            entity.ToTable("umbracoUser2NodeNotify");
+            entity.HasKey(e => new { e.UserId, e.NodeId, e.Action });
+        });
+
+        modelBuilder.Entity<ConsentDto>(entity =>
+        {
+            entity.ToTable("umbracoConsent");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<LogViewerQueryDto>(entity =>
+        {
+            entity.ToTable("umbracoLogViewerQuery");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<WebhookDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhook");
+            entity.HasKey(e => e.Id);
+            entity.HasAlternateKey(e => e.Key);
+        });
+
+        modelBuilder.Entity<Webhook2ContentTypeKeysDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhook2ContentTypeKeys");
+            entity.HasKey(e => new { e.WebhookId, e.ContentTypeKey });
+            entity.HasOne<WebhookDto>().WithMany().HasForeignKey(e => e.WebhookId);
+        });
+
+        modelBuilder.Entity<Webhook2EventsDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhook2Events");
+            entity.HasKey(e => new { e.WebhookId, e.Event });
+            entity.HasOne<WebhookDto>().WithMany().HasForeignKey(e => e.WebhookId);
+        });
+
+        modelBuilder.Entity<Webhook2HeadersDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhook2Headers");
+            entity.HasKey(e => new { e.WebhookId, e.Key });
+            entity.HasOne<WebhookDto>().WithMany().HasForeignKey(e => e.WebhookId);
+        });
+
+        modelBuilder.Entity<WebhookLogDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhookLog");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<WebhookRequestDto>(entity =>
+        {
+            entity.ToTable("umbracoWebhookRequest");
+            entity.HasKey(e => e.Id);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);

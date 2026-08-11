@@ -38,6 +38,15 @@ public class UmbracoEFCoreComposer : IComposer
         builder.Services.AddUnique<ILanguageRepository, EfLanguageRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IKeyValueRepository, EfKeyValueRepository>(ServiceLifetime.Singleton);
 
+        // ── Batch 2: RedirectUrl, Notifications, Webhook, Consent, LogViewerQuery, NodeCount ──
+        builder.Services.AddUnique<IRedirectUrlRepository, EfRedirectUrlRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<INotificationsRepository, EfNotificationsRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IWebhookRepository, EfWebhookRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IWebhookLogRepository, EfWebhookLogRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IWebhookRequestRepository, EfWebhookRequestRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IConsentRepository, EfConsentRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ILogViewerQueryRepository, EfLogViewerQueryRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<INodeCountRepository, EfNodeCountRepository>(ServiceLifetime.Singleton);
 
         builder.Services.AddOpenIddict()
 
