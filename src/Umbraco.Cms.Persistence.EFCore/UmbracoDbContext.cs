@@ -277,6 +277,67 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.Id);
         });
 
+        // ── Batch 3: ServerRegistration, LongRunningOperation, CacheInstruction, ──
+        // ── DocumentUrl, DocumentUrlAlias, TwoFactorLogin, ExternalLogin, UserData ──
+
+        modelBuilder.Entity<ServerRegistrationDto>(entity =>
+        {
+            entity.ToTable("umbracoServer");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<LongRunningOperationDto>(entity =>
+        {
+            entity.ToTable("umbracoLongRunningOperation");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<CacheInstructionDto>(entity =>
+        {
+            entity.ToTable("umbracoCacheInstruction");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<DocumentUrlDto>(entity =>
+        {
+            entity.ToTable("umbracoDocumentUrl");
+            entity.HasKey(e => new { e.UniqueId, e.LanguageId, e.IsDraft, e.UrlSegment });
+            entity.Ignore(e => e.NodeId); // NodeId is the PK column name alias — UniqueId is the real FK
+        });
+
+        modelBuilder.Entity<DocumentUrlAliasDto>(entity =>
+        {
+            entity.ToTable("umbracoDocumentUrlAlias");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<TwoFactorLoginDto>(entity =>
+        {
+            entity.ToTable("umbracoTwoFactorLogin");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ExternalLoginDto>(entity =>
+        {
+            entity.ToTable("umbracoExternalLogin");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ExternalLoginTokenDto>(entity =>
+        {
+            entity.ToTable("umbracoExternalLoginToken");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.ExternalLoginDto)
+                  .WithMany()
+                  .HasForeignKey(e => e.ExternalLoginId);
+        });
+
+        modelBuilder.Entity<UserDataDto>(entity =>
+        {
+            entity.ToTable("umbracoUserData");
+            entity.HasKey(e => e.Key);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);

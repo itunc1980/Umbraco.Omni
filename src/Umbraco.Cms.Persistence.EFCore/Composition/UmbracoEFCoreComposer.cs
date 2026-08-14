@@ -48,6 +48,19 @@ public class UmbracoEFCoreComposer : IComposer
         builder.Services.AddUnique<ILogViewerQueryRepository, EfLogViewerQueryRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<INodeCountRepository, EfNodeCountRepository>(ServiceLifetime.Singleton);
 
+        // ── Batch 3: ServerRegistration, LongRunningOperation, CacheInstruction, ──
+        // ──          DocumentUrl, DocumentUrlAlias, IdKeyMap, TwoFactorLogin,     ──
+        // ──          ExternalLogin, UserData                                      ──
+        builder.Services.AddUnique<IServerRegistrationRepository, EfServerRegistrationRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ILongRunningOperationRepository, EfLongRunningOperationRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ICacheInstructionRepository, EfCacheInstructionRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IDocumentUrlRepository, EfDocumentUrlRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IDocumentUrlAliasRepository, EfDocumentUrlAliasRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IIdKeyMapRepository, EfIdKeyMapRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ITwoFactorLoginRepository, EfTwoFactorLoginRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IExternalLoginWithKeyRepository, EfExternalLoginRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IUserDataRepository, EfUserDataRepository>(ServiceLifetime.Singleton);
+
         builder.Services.AddOpenIddict()
 
             // Register the OpenIddict core components.
