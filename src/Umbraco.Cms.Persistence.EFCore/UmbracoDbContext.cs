@@ -338,6 +338,46 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.Key);
         });
 
+        // ── Faz 2-A: PublicAccess, RelationType, Relation, Dictionary ──────────
+
+        modelBuilder.Entity<AccessDto>(entity =>
+        {
+            entity.ToTable("umbracoAccess");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<AccessRuleDto>(entity =>
+        {
+            entity.ToTable("umbracoAccessRule");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<RelationTypeDto>(entity =>
+        {
+            entity.ToTable("umbracoRelationType");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<RelationDto>(entity =>
+        {
+            entity.ToTable("umbracoRelation");
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.ParentObjectType);
+            entity.Ignore(e => e.ChildObjectType);
+        });
+
+        modelBuilder.Entity<DictionaryDto>(entity =>
+        {
+            entity.ToTable("cmsDictionary");
+            entity.HasKey(e => e.PrimaryKey);
+        });
+
+        modelBuilder.Entity<LanguageTextDto>(entity =>
+        {
+            entity.ToTable("cmsLanguageText");
+            entity.HasKey(e => e.PrimaryKey);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);

@@ -70,6 +70,12 @@ public class UmbracoEFCoreComposer : IComposer
                     .UseEntityFrameworkCore()
                     .UseDbContext<UmbracoDbContext>();
             });
+
+        // ── Faz 2-A: PublicAccess, RelationType, Relation, Dictionary ──────
+        builder.Services.AddUnique<IPublicAccessRepository, EfPublicAccessRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IRelationTypeRepository, EfRelationTypeRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IRelationRepository, EfRelationRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IDictionaryRepository, EfDictionaryRepository>(ServiceLifetime.Singleton);
     }
 }
 
