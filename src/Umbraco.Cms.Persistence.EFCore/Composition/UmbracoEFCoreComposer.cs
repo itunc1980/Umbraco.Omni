@@ -76,6 +76,10 @@ public class UmbracoEFCoreComposer : IComposer
         builder.Services.AddUnique<IRelationTypeRepository, EfRelationTypeRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IRelationRepository, EfRelationRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IDictionaryRepository, EfDictionaryRepository>(ServiceLifetime.Singleton);
+
+        // ── Faz 2-B: MemberGroup, Tag ──────────────────────────────────────
+        builder.Services.AddUnique<IMemberGroupRepository, EfMemberGroupRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ITagRepository, EfTagRepository>(ServiceLifetime.Singleton);
     }
 }
 

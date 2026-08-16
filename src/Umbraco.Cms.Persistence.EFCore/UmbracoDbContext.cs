@@ -378,6 +378,38 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.PrimaryKey);
         });
 
+        // ── Faz 2-B: MemberGroup, Tag ──────────────────────────────────────────
+
+        modelBuilder.Entity<Member2MemberGroupDto>(entity =>
+        {
+            entity.ToTable("cmsMember2MemberGroup");
+            entity.HasKey(e => new { e.Member, e.MemberGroup });
+        });
+
+        modelBuilder.Entity<MemberDto>(entity =>
+        {
+            entity.ToTable("cmsMember");
+            entity.HasKey(e => e.NodeId);
+        });
+
+        modelBuilder.Entity<TagDto>(entity =>
+        {
+            entity.ToTable("cmsTags");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<TagRelationshipDto>(entity =>
+        {
+            entity.ToTable("cmsTagRelationship");
+            entity.HasKey(e => new { e.NodeId, e.PropertyTypeId, e.TagId });
+        });
+
+        modelBuilder.Entity<PropertyTypeDto>(entity =>
+        {
+            entity.ToTable("cmsPropertyType");
+            entity.HasKey(e => e.Id);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
