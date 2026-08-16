@@ -468,6 +468,32 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => new { e.UserId, e.UserGroupId });
         });
 
+        // ── Batch 3-A: ContentType, MediaType, MemberType Schemas ─────────────
+
+        modelBuilder.Entity<PropertyTypeGroupDto>(entity =>
+        {
+            entity.ToTable("cmsPropertyTypeGroup");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ContentTypeAllowedContentTypeDto>(entity =>
+        {
+            entity.ToTable("cmsContentTypeAllowedContentType");
+            entity.HasKey(e => new { e.Id, e.AllowedId });
+        });
+
+        modelBuilder.Entity<ContentTypeTemplateDto>(entity =>
+        {
+            entity.ToTable("cmsDocumentType");
+            entity.HasKey(e => new { e.ContentTypeNodeId, e.TemplateNodeId });
+        });
+
+        modelBuilder.Entity<ContentType2ContentTypeDto>(entity =>
+        {
+            entity.ToTable("cmsContentType2ContentType");
+            entity.HasKey(e => new { e.ParentId, e.ChildId });
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);

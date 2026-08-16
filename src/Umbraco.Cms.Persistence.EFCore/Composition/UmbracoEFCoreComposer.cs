@@ -88,6 +88,11 @@ public class UmbracoEFCoreComposer : IComposer
         // ── Faz 2-D: TrackedReferences, UserGroup ──────────────────────────
         builder.Services.AddUnique<ITrackedReferencesRepository, EfTrackedReferencesRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IUserGroupRepository, EfUserGroupRepository>(ServiceLifetime.Singleton);
+
+        // ── Batch 3-A: ContentType, MediaType, MemberType ──────────────────
+        builder.Services.AddUnique<IContentTypeRepository, EfContentTypeRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IMediaTypeRepository, EfMediaTypeRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<IMemberTypeRepository, EfMemberTypeRepository>(ServiceLifetime.Singleton);
     }
 }
 
