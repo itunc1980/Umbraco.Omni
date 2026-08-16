@@ -80,6 +80,10 @@ public class UmbracoEFCoreComposer : IComposer
         // ── Faz 2-B: MemberGroup, Tag ──────────────────────────────────────
         builder.Services.AddUnique<IMemberGroupRepository, EfMemberGroupRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<ITagRepository, EfTagRepository>(ServiceLifetime.Singleton);
+
+        // ── Faz 2-C: DataType, Template ────────────────────────────────────
+        builder.Services.AddUnique<IDataTypeRepository, EfDataTypeRepository>(ServiceLifetime.Singleton);
+        builder.Services.AddUnique<ITemplateRepository, EfTemplateRepository>(ServiceLifetime.Singleton);
     }
 }
 

@@ -410,6 +410,26 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.Id);
         });
 
+        // ── Faz 2-C: DataType, Template, ContentType ───────────────────────────
+
+        modelBuilder.Entity<DataTypeDto>(entity =>
+        {
+            entity.ToTable("umbracoDataType");
+            entity.HasKey(e => e.NodeId);
+        });
+
+        modelBuilder.Entity<ContentTypeDto>(entity =>
+        {
+            entity.ToTable("cmsContentType");
+            entity.HasKey(e => e.PrimaryKey);
+        });
+
+        modelBuilder.Entity<TemplateDto>(entity =>
+        {
+            entity.ToTable("cmsTemplate");
+            entity.HasKey(e => e.PrimaryKey);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
