@@ -494,6 +494,50 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => new { e.ParentId, e.ChildId });
         });
 
+        // ── Batch 3-C: Content, Document, Media, Member Instances & Versions ──
+
+        modelBuilder.Entity<ContentVersionDto>(entity =>
+        {
+            entity.ToTable("umbracoContentVersion");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<DocumentVersionDto>(entity =>
+        {
+            entity.ToTable("umbracoDocumentVersion");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<MediaVersionDto>(entity =>
+        {
+            entity.ToTable("umbracoMediaVersion");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ContentVersionCultureVariationDto>(entity =>
+        {
+            entity.ToTable("umbracoContentVersionCultureVariation");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<DocumentCultureVariationDto>(entity =>
+        {
+            entity.ToTable("umbracoDocumentCultureVariation");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<PropertyDataDto>(entity =>
+        {
+            entity.ToTable("umbracoPropertyData");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ContentScheduleDto>(entity =>
+        {
+            entity.ToTable("umbracoContentSchedule");
+            entity.HasKey(e => e.Id);
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
