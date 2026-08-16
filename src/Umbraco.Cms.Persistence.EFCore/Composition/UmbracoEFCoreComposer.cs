@@ -93,6 +93,9 @@ public class UmbracoEFCoreComposer : IComposer
         builder.Services.AddUnique<IContentTypeRepository, EfContentTypeRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IMediaTypeRepository, EfMediaTypeRepository>(ServiceLifetime.Singleton);
         builder.Services.AddUnique<IMemberTypeRepository, EfMemberTypeRepository>(ServiceLifetime.Singleton);
+
+        // ── Batch 3-B: Entity (Lightweight Tree & Projections) ─────────────
+        builder.Services.AddUnique<IEntityRepository, EfEntityRepository>(ServiceLifetime.Singleton);
     }
 }
 
