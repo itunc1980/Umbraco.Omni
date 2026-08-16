@@ -430,6 +430,44 @@ public class UmbracoDbContext : DbContext
             entity.HasKey(e => e.PrimaryKey);
         });
 
+        // ── Faz 2-D: UserGroup, Junction Tables ────────────────────────────────
+
+        modelBuilder.Entity<UserGroupDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserGroup2AppDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2App");
+            entity.HasKey(e => new { e.UserGroupId, e.AppAlias });
+        });
+
+        modelBuilder.Entity<UserGroup2LanguageDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2Language");
+            entity.HasKey(e => new { e.UserGroupId, e.LanguageId });
+        });
+
+        modelBuilder.Entity<UserGroup2PermissionDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2Permission");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserGroup2GranularPermissionDto>(entity =>
+        {
+            entity.ToTable("umbracoUserGroup2GranularPermission");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<User2UserGroupDto>(entity =>
+        {
+            entity.ToTable("umbracoUser2UserGroup");
+            entity.HasKey(e => new { e.UserId, e.UserGroupId });
+        });
+
         var providerName = Database.ProviderName;
         bool isPostgreSql = string.Equals(providerName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.OrdinalIgnoreCase);
         bool isOracle = string.Equals(providerName, "Oracle.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase);
